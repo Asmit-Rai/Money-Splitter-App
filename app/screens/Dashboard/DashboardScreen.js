@@ -1,39 +1,83 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { View, ScrollView, StyleSheet, TouchableOpacity } from "react-native";
 import { Avatar, Text, Card, Button } from "react-native-paper";
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { getAuth } from "firebase/auth";
 
 const DashboardScreen = () => {
   const navigation = useNavigation();
+  const [groups, setGroups] = useState([]);
+  const [username, setUsername] = useState("");
+
+  useEffect(() => {
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (user) {
+      setUsername(user.email);
+    }
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const response = await fetch(
+        "http://192.168.149.155:5000/api/groups/show-groups"
+      );
+      const data = await response.json();
+      setGroups(data);
+    } catch (error) {
+      console.error("Error fetching the data", error);
+    }
+  };
+
+  const totalMembers = (groupId) => {
+    const group = groups.find((group) => group._id === groupId);
+    return group ? group.participants.length : 0;
+  };
+
+  const totalExpense = (groupId) => {
+    const group = groups.find((group) => group._id === groupId);
+    return group ? group.totalExpense : 0;
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchData();
+    }, [])
+  );
 
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* Header Section */}
         <View style={styles.header}>
           <Avatar.Icon size={40} icon="account" style={styles.avatar} />
-          <Text style={styles.username}>Username</Text>
+          <Text style={styles.username}>{username}</Text>
         </View>
 
-        {/* Groups Title */}
         <Text style={styles.group}>My Groups</Text>
 
-        {/* Group Container */}
-        <TouchableOpacity
-          style={styles.groupContainer}
-          onPress={() => navigation.navigate('GroupDetail')}
-        >
-          <Avatar.Image
-            size={60}
-            source={{ uri: "https://via.placeholder.com/50" }}
-            style={styles.groupAvatar}
-          />
-          <View style={styles.groupDetails}>
-            <Text style={styles.groupName}>Group Name</Text>
-            <Text style={styles.groupMembers}>Members: 5</Text>
-            <Text style={styles.groupExpenses}>Total Expenses: $200</Text>
-          </View>
-        </TouchableOpacity>
+        {groups.map((group) => (
+                   <TouchableOpacity
+            key={group._id}
+            style={styles.groupContainer}
+            onPress={() => navigation.navigate("GroupDetail", { groupDetails: groups.find((g) => g._id === group._id) })}
+          >
+            <Avatar.Image
+              size={60}
+              source={{ uri: "https://via.placeholder.com/50" }}
+              style={styles.groupAvatar}
+            />
+
+            <View style={styles.groupDetails}>
+              <Text style={styles.groupName}>{group.groupName}</Text>
+              <Text style={styles.groupMembers}>
+                Total Participants : {totalMembers(group._id)}
+              </Text>
+              <Text style={styles.groupExpenses}>
+                Total Expenses: ₹{totalExpense(group._id)}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        ))}
       </ScrollView>
     </View>
   );
@@ -46,7 +90,7 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
-    paddingBottom: 80, // Add padding to avoid content being hidden behind the button
+    paddingBottom: 80, 
   },
   header: {
     flexDirection: "row",

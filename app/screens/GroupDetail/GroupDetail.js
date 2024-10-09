@@ -1,30 +1,26 @@
 import React from 'react';
 import { View, Image, StyleSheet } from 'react-native';
 import { Text, Card, Avatar, List, Divider, Button } from 'react-native-paper';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 const GroupDetailScreen = () => {
   const navigation = useNavigation();
+  const route = useRoute();
+  const { groupDetails } = route.params;
 
-  // Dummy group data
-  const groupData = {
-    groupName: 'Trip to Paris',
-    groupImage: 'https://example.com/group-image.jpg',
-    expenses: [
-      { title: 'Hotel Booking', amount: 200, paidBy: 'John' },
-      { title: 'Flight Tickets', amount: 500, paidBy: 'Jane' },
-      { title: 'Dinner', amount: 100, paidBy: 'Mike' },
-    ],
-  };
+  console.log(groupDetails);
 
   return (
     <View style={styles.container}>
       {/* Group Header */}
       <Card style={styles.groupCard}>
         <View style={styles.groupHeader}>
-          <Image source={{ uri: groupData.groupImage }} style={styles.groupImage} />
+          <Image
+            source={{ uri: groupDetails.groupImage }}
+            style={styles.groupImage}
+          />
           <View style={styles.groupHeaderText}>
-            <Text style={styles.groupName}>{groupData.groupName}</Text>
+            <Text style={styles.groupName}>{groupDetails.groupName}</Text>
           </View>
         </View>
         <Button
@@ -38,19 +34,25 @@ const GroupDetailScreen = () => {
 
       {/* Expenses List */}
       <List.Section>
-        {groupData.expenses.map((expense, index) => (
-          <React.Fragment key={index}>
-            <List.Item
-              title={expense.title}
-              description={`Paid by ${expense.paidBy}`}
-              left={(props) => <Avatar.Icon {...props} icon="currency-usd" />}
-              right={(props) => <Text {...props} style={styles.amount}>${expense.amount}</Text>}
-              onPress={() => navigation.navigate('GroupExpenseSummaryScreen', { expense, groupData })}
-            />
-            <Divider />
-          </React.Fragment>
-        ))}
-      </List.Section>
+    {groupDetails.expenses.map((expense, index) => (
+      <React.Fragment key={expense._id}>
+        <List.Item
+          title={expense.expenseName}
+          key={expense._id}
+          description={`Paid by ${expense.paidBy}`}
+          left={(props) => <Avatar.Icon {...props} icon="currency-usd" />}
+          right={(props) => <Text {...props} style={styles.amount}>₹{expense.amount}</Text>}
+          onPress={() => navigation.navigate('GroupExpenseSummaryScreen', { 
+              expenseSummary: expense, 
+              groupName: groupDetails.groupName, 
+              participants: groupDetails.participants, 
+              paymentStatus: groupDetails.paymentStatus 
+          })}
+        />
+        <Divider />
+      </React.Fragment>
+    ))}
+</List.Section>
 
       {/* Add Expense Button */}
       <View style={styles.addExpenseButton}>
@@ -75,9 +77,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   groupHeader: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
-    padding: 16,
+    padding: 20,
+    justifyContent: 'center',
   },
   groupImage: {
     width: 60,
@@ -92,6 +95,7 @@ const styles = StyleSheet.create({
   groupName: {
     fontSize: 20,
     fontWeight: 'bold',
+    textAlign: 'center',
   },
   scanButton: {
     marginTop: 10,

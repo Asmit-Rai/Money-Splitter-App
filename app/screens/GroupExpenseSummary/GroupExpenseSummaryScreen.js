@@ -1,45 +1,50 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { Card, Text, List } from 'react-native-paper';
 
 const GroupExpenseSummaryScreen = () => {
     const route = useRoute();
-    const { expense, groupData } = route.params;
-
-    const [participants, setParticipants] = useState([]);
-
-    useEffect(() => {
-        // Fetch participants data here and set it
-        // For now, we'll use dummy data
-        setParticipants([
-            { id: '1', name: 'John' },
-            { id: '2', name: 'Jane' },
-            { id: '3', name: 'Mike' },
-        ]);
-    }, []);
+    const { expenseSummary, groupName, participants, paymentStatus } = route.params;
 
     return (
-        <View style={styles.container}>
+        <ScrollView style={styles.container}>
             <Card style={styles.card}>
                 <Card.Title title="Group Expense Summary" />
                 <Card.Content>
-                    <Text style={styles.label}>Group Name: {groupData.groupName}</Text>
-                    <Text style={styles.label}>Expense Name: {expense.title}</Text>
-                    <Text style={styles.label}>Amount: ${expense.amount}</Text>
-                    <Text style={styles.label}>Paid By: {expense.paidBy}</Text>
-                    <Text style={styles.label}>Participants:</Text>
+                    <Text style={styles.label}>Group Name: {groupName}</Text>
+                    <Text style={styles.label}>Expense Name: {expenseSummary.expenseName}</Text>
+                    <Text style={styles.label}>Amount: ₹{expenseSummary.amount}</Text>
+                    <Text style={styles.label}>Paid By: {expenseSummary.paidBy}</Text>
+                    <Text style={styles.label}>Date: {new Date(expenseSummary.date.$date).toLocaleDateString()}</Text>
+
+                    <Text style={styles.subHeading}>Split Details:</Text>
+                    {expenseSummary.splitDetails.map((split, idx) => (
+                        <Text key={split.participant + idx} style={styles.label}>
+                            {split.participant}: Owes ₹{split.owedAmount}
+                        </Text>
+                    ))}
+
+                    <Text style={styles.subHeading}>Participants:</Text>
                     {participants.map((participant) => (
                         <List.Item
-                            key={participant.id}
+                            key={participant._id.$oid}
                             title={participant.name}
+                            description={participant.email}
                             left={() => <List.Icon icon="account" />}
                             style={styles.participant}
                         />
                     ))}
+
+                    <Text style={styles.subHeading}>Payment Status:</Text>
+                    {paymentStatus.map((payment, idx) => (
+                        <Text key={payment.participant + idx} style={styles.label}>
+                            {payment.participant}: {payment.status} (₹{payment.amountPaid})
+                        </Text>
+                    ))}
                 </Card.Content>
             </Card>
-        </View>
+        </ScrollView>
     );
 };
 
@@ -55,6 +60,14 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 16,
         marginBottom: 8,
+    },
+    subHeading: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginVertical: 8,
+    },
+    expenseContainer: {
+        marginVertical: 10,
     },
     participant: {
         marginLeft: 16,
