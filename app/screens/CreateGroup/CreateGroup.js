@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Alert, ScrollView } from 'react-native';
 import { TextInput, Button, Modal, Portal, Text, Provider as PaperProvider, List } from 'react-native-paper';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CreateGroup = () => {
   const [groupName, setGroupName] = useState('');
@@ -9,6 +10,24 @@ const CreateGroup = () => {
   const [memberName, setMemberName] = useState('');
   const [memberEmail, setMemberEmail] = useState('');
   const [members, setMembers] = useState([]);
+  const [userEmail, setUserEmail] = useState('');
+
+  useEffect(() => {
+    const fetchEmail = async () => {
+      try {
+        const email = await AsyncStorage.getItem('email'); 
+        if (email) {
+          setUserEmail(email);
+        } else {
+          Alert.alert('Error', 'Unable to fetch user email.');
+        }
+      } catch (error) {
+        console.error('Error fetching email from AsyncStorage:', error);
+      }
+    };
+
+    fetchEmail();
+  }, []);
 
   const showModal = () => setVisible(true);
   const hideModal = () => setVisible(false);
@@ -18,26 +37,35 @@ const CreateGroup = () => {
       Alert.alert('Validation Error', 'Group name is required!', [{ text: 'OK' }]);
       return;
     }
-  
+
     try {
-      const response = await axios.post('http://192.168.149.155:5000/api/groups/add-groups', {
+      const response = await axios.post('https://money-splitter-backend.onrender.com/api/groups/add-groups', {
+        email: userEmail, 
         groupName,
-        participants: members.map(member => ({ name: member.name, email: member.email })),
+        participants: members.map((member) => ({
+          name: member.name,
+          email: member.email,
+        })),
       });
-  
+
       Alert.alert('Success', `Group '${response.data.group.groupName}' created successfully!`, [{ text: 'OK' }]);
       setGroupName('');
       setMembers([]);
     } catch (error) {
-      console.error('Error creating group:', error);
+      console.error('Error creating group:', error.response?.data || error.message);
       Alert.alert('Error', 'Failed to create group. Please try again.', [{ text: 'OK' }]);
     }
   };
-  
 
   const handleAddMember = () => {
     if (!memberName || !memberEmail) {
       Alert.alert('Validation Error', 'Both name and email are required!', [{ text: 'OK' }]);
+      return;
+    }
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(memberEmail)) {
+      Alert.alert('Validation Error', 'Invalid email format!', [{ text: 'OK' }]);
       return;
     }
 
@@ -91,7 +119,7 @@ const CreateGroup = () => {
             <Text style={styles.memberListTitle}>Members:</Text>
             {members.map((member, index) => (
               <List.Item
-                key={index}
+                key={`${member.email}-${index}`}
                 title={member.name}
                 description={member.email}
                 left={() => <List.Icon icon="account" />}

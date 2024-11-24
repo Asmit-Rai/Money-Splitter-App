@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Text } from 'react-native';
+import { View, StyleSheet, Image } from 'react-native';
 import { TextInput, Button } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth'; 
 import { FIREBASE_APP } from "@/firebaseConfig"; 
+import Toast from 'react-native-toast-message';
 
 const LoginScreen = () => {
     const [email, setEmail] = useState('');
@@ -16,13 +17,19 @@ const LoginScreen = () => {
             await signInWithEmailAndPassword(auth, email, password); 
             navigation.navigate('Money Splitter'); 
         } catch (error) {
-            console.error("Error in sign-in:", error);
+            const errorMessage = error.message || "An error occurred during login.";
+            // Show a toast with the error message
+            Toast.show({
+                type: 'error',
+                text1: 'Authentication Error',
+                text2: errorMessage,
+            });
         }
     };
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>🔐 Welcome Back! Please log in to continue 🚀</Text>
+            <Image source={require('@/assets/images/appLogo_t.png')} style={styles.logo} />
             <TextInput
                 mode="outlined"
                 style={styles.input}
@@ -47,6 +54,8 @@ const LoginScreen = () => {
                     SignUp
                 </Button>
             </View>
+            {/* Include the Toast component */}
+            <Toast />
         </View>
     );
 };
@@ -69,12 +78,10 @@ const styles = StyleSheet.create({
     buttonSpacing: {
         width: 15, 
     },
-    title: {
-        fontSize: 28, 
-        fontWeight: 'bold', 
-        marginBottom: 30, 
-        color: '#333', 
-        textAlign: 'center', 
+    logo: {
+        width: 350,
+        height: 300,
+        marginBottom: 30,
     },
     button: {
         flex: 1,

@@ -19,8 +19,8 @@ const GroupExpenseSummaryScreen = () => {
                     <Text style={styles.label}>Date: {new Date(expenseSummary.date.$date).toLocaleDateString()}</Text>
 
                     <Text style={styles.subHeading}>Split Details:</Text>
-                    {expenseSummary.splitDetails.map((split, idx) => (
-                        <Text key={split.participant + idx} style={styles.label}>
+                    {expenseSummary.splitDetails.map((split) => (
+                        <Text key={split.participant} style={styles.label}>
                             {split.participant}: Owes ₹{split.owedAmount}
                         </Text>
                     ))}
@@ -38,7 +38,7 @@ const GroupExpenseSummaryScreen = () => {
 
                     <Text style={styles.subHeading}>Payment Status:</Text>
                     {paymentStatus.map((payment, idx) => (
-                        <Text key={payment.participant + idx} style={styles.label}>
+                        <Text key={payment.participant + payment.status + idx} style={styles.label}>
                             {payment.participant}: {payment.status} (₹{payment.amountPaid})
                         </Text>
                     ))}
@@ -65,9 +65,6 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         marginVertical: 8,
-    },
-    expenseContainer: {
-        marginVertical: 10,
     },
     participant: {
         marginLeft: 16,

@@ -8,8 +8,6 @@ const GroupDetailScreen = () => {
   const route = useRoute();
   const { groupDetails } = route.params;
 
-  console.log(groupDetails);
-
   return (
     <View style={styles.container}>
       {/* Group Header */}
@@ -26,33 +24,40 @@ const GroupDetailScreen = () => {
         <Button
           mode="contained"
           style={styles.scanButton}
-          onPress={() => navigation.navigate('QRScanner')}
+          onPress={() =>
+            navigation.navigate('QRScanner', { participants: groupDetails.participants })
+          }
         >
-          Scan the QR to send payment
+          Pay
         </Button>
       </Card>
 
       {/* Expenses List */}
       <List.Section>
-    {groupDetails.expenses.map((expense, index) => (
-      <React.Fragment key={expense._id}>
-        <List.Item
-          title={expense.expenseName}
-          key={expense._id}
-          description={`Paid by ${expense.paidBy}`}
-          left={(props) => <Avatar.Icon {...props} icon="currency-usd" />}
-          right={(props) => <Text {...props} style={styles.amount}>₹{expense.amount}</Text>}
-          onPress={() => navigation.navigate('GroupExpenseSummaryScreen', { 
-              expenseSummary: expense, 
-              groupName: groupDetails.groupName, 
-              participants: groupDetails.participants, 
-              paymentStatus: groupDetails.paymentStatus 
-          })}
-        />
-        <Divider />
-      </React.Fragment>
-    ))}
-</List.Section>
+        {(groupDetails.expenses ?? []).map((expense) => (
+          <React.Fragment key={expense._id}>
+            <List.Item
+              title={expense.expenseName}
+              description={`Paid by ${expense.paidBy}`}
+              left={(props) => <Avatar.Icon {...props} icon="currency-usd" />}
+              right={(props) => (
+                <Text {...props} style={styles.amount}>
+                  ₹{expense.amount}
+                </Text>
+              )}
+              onPress={() =>
+                navigation.navigate('GroupExpenseSummaryScreen', {
+                  expenseSummary: expense,
+                  groupName: groupDetails.groupName,
+                  participants: groupDetails.participants,
+                  paymentStatus: groupDetails.paymentStatus,
+                })
+              }
+            />
+            <Divider />
+          </React.Fragment>
+        ))}
+      </List.Section>
 
       {/* Add Expense Button */}
       <View style={styles.addExpenseButton}>

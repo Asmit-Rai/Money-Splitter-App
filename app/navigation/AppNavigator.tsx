@@ -6,16 +6,13 @@ import LoginScreen from '../screens/Auth/Login';
 import DashboardScreen from '../screens/Dashboard/DashboardScreen';
 import GroupDetailScreen from '../screens/GroupDetail/GroupDetail';
 import QRScreen from '../screens/QRScanner/QRScreen';
-import PaymentIntegrationScreen from '../screens/PaymentIntegration/PaymentIntegrationScreen';
 import SplitExpenseScreen from '../screens/SplitExpense/SplitExpenseScreen';
 import SettingsScreen from '../screens/Settings/SettingsScreen';
-import InviteMemberScreen from '../screens/InviteMember/InviteMemberScreen';
+import InviteMembersScreen from '../screens/InviteMember/InviteMemberScreen'; // Fixed duplicate import
 import GroupExpenseSummaryScreen from '../screens/GroupExpenseSummary/GroupExpenseSummaryScreen';
 import CreateExpenseScreen from '../screens/CreateExpense/CreateExpenseScreen'; 
-import CreateGroupScreen from '../screens/CreateExpense/CreateExpenseScreen'; 
-import InviteMembersScreen from '../screens/InviteMember/InviteMemberScreen'; 
-import CreateGroup from "@/app/screens/CreateGroup/CreateGroup"
-import SignUp from '@/app/screens/Auth/SignUp';
+import CreateGroup from '../screens/CreateGroup/CreateGroup'; // Fixed path
+import SignUp from '../screens/Auth/SignUp'; // Fixed path
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -25,7 +22,7 @@ const TabNavigator = () => {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ color, size }) => {
-          let iconName: 'view-dashboard' | 'account-group' | 'account-plus' | 'cog' = 'view-dashboard';
+          let iconName = 'view-dashboard'; // Removed TypeScript type annotation
           
           if (route.name === 'Dashboard') {
             iconName = 'view-dashboard';
@@ -41,6 +38,7 @@ const TabNavigator = () => {
         },
         tabBarActiveTintColor: '#663399',
         tabBarInactiveTintColor: 'gray',
+        headerShown: false, // Prevents header duplication
       })}
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
@@ -55,16 +53,14 @@ const AppNavigator = () => {
   return (
     <Stack.Navigator initialRouteName="Login">
       <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="SignUp" component={SignUp}/>
+      <Stack.Screen name="SignUp" component={SignUp} />
       <Stack.Screen name="Money Splitter" component={TabNavigator} />
       <Stack.Screen name="GroupDetail" component={GroupDetailScreen} />
       <Stack.Screen name="CreateExpense" component={CreateExpenseScreen} />
       <Stack.Screen name="QRScanner" component={QRScreen} />
-      <Stack.Screen name="PaymentIntegration" component={PaymentIntegrationScreen} />
       <Stack.Screen name="SplitExpense" component={SplitExpenseScreen} />
-      <Stack.Screen name="InviteMember" component={InviteMemberScreen} />
+      <Stack.Screen name="InviteMember" component={InviteMembersScreen} />
       <Stack.Screen name="GroupExpenseSummaryScreen" component={GroupExpenseSummaryScreen} />
-      
     </Stack.Navigator>
   );
 };
