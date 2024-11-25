@@ -3,17 +3,21 @@ import { View, StyleSheet, Alert, ScrollView } from 'react-native';
 import { Text, Button, TextInput, List, Checkbox } from 'react-native-paper';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { StripeProvider, useStripe } from '@stripe/stripe-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type Participant = {
   name: string;
+  _id: string;
+  userId: string;
 };
 
-type QRScreenRouteProp = RouteProp<{ QRScanner: { participants: Participant[] } }, 'QRScanner'>;
+type QRScreenRouteProp = RouteProp<{ QRScanner: { participants: Participant[], currentGroupId: string } }, 'QRScanner'>;
 
 const QRScreen = () => {
   const route = useRoute<QRScreenRouteProp>();
-  const { participants } = route.params;
+  const { participants, currentGroupId } = route.params;
 
+  const [userId, setUserId] = useState<string | null>(null);
   const [billAmount, setBillAmount] = useState('');
   const [expenseName, setExpenseName] = useState('');
   const [splitAmount, setSplitAmount] = useState('');
@@ -21,6 +25,18 @@ const QRScreen = () => {
   const [amounts, setAmounts] = useState<{ [key: string]: string }>({});
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const [loading, setLoading] = useState(false);
+  const [paymentIntentId, setPaymentIntentId] = useState('');
+const [paymentIntentClientSecret, setPaymentIntentClientSecret] = useState('');
+
+
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const storedUserId = await AsyncStorage.getItem('userId');
+      setUserId(storedUserId);
+    };
+
+    fetchUserId();
+  }, []);
 
   useEffect(() => {
     if (billAmount) {
@@ -28,50 +44,143 @@ const QRScreen = () => {
     }
   }, [billAmount]);
 
-  const fetchPaymentSheetParams = async () => {
-    const response = await fetch(`https://money-splitter-backend.onrender.com/payment-sheet`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ billAmount: parseFloat(billAmount) * 100 }), // Convert to smallest currency unit
-    });
-    const { paymentIntent, ephemeralKey, customer } = await response.json();
-    return {
-      paymentIntent,
-      ephemeralKey,
-      customer,
-    };
-  };
+ // In your React component
 
-  const initializePaymentSheet = async () => {
-    const { paymentIntent, ephemeralKey, customer } = await fetchPaymentSheetParams();
-    const { error } = await initPaymentSheet({
-      merchantDisplayName: "Example, Inc.",
-      customerId: customer,
-      customerEphemeralKeySecret: ephemeralKey,
-      paymentIntentClientSecret: paymentIntent,
-      allowsDelayedPaymentMethods: true,
-      defaultBillingDetails: {
-        name: 'Jane Doe',
-      },
-    });
-    if (!error) {
-      setLoading(true);
-    } else {
-      console.error("Error initializing payment sheet:", error);
-    }
-  };
 
-  const openPaymentSheet = async () => {
-    if (!loading) return;
+ 
+ 
+ const fetchPaymentSheetParams = async () => {
+   const response = await fetch('https://money-splitter-backend.onrender.com/payment-sheet', {
+     method: 'POST',
+     headers: {
+       'Content-Type': 'application/json',
+     },
+     body: JSON.stringify({
+       expenseName,
+       billAmount: parseFloat(billAmount),
+       splitDetails: checked
+         ? participants.map((p) => ({
+             name: p.name,
+             amount: splitAmount,
+           }))
+         : Object.entries(amounts).map(([name, amount]) => ({
+             name,
+             amount: parseFloat(amount),
+           })),
+     }),
+   });
+ 
+   const {
+     paymentIntentId,
+     paymentIntentClientSecret,
+     ephemeralKey,
+     customer,
+   } = await response.json();
+ 
+   console.log('Payment sheet params:', {
+     paymentIntentId,
+     paymentIntentClientSecret,
+     ephemeralKey,
+     customer,
+   });
+ 
+   // Store both the PaymentIntent ID and client secret
+   setPaymentIntentId(paymentIntentId);
+   setPaymentIntentClientSecret(paymentIntentClientSecret);
+ 
+   return {
+     paymentIntentClientSecret,
+     ephemeralKey,
+     customer,
+   };
+ };
+ 
+
+
+
+ const initializePaymentSheet = async () => {
+  const {
+    paymentIntentClientSecret,
+    ephemeralKey,
+    customer,
+  } = await fetchPaymentSheetParams();
+  const { error } = await initPaymentSheet({
+    merchantDisplayName: 'Example, Inc.',
+    customerId: customer,
+    customerEphemeralKeySecret: ephemeralKey,
+    paymentIntentClientSecret: paymentIntentClientSecret, // Use the client secret here
+    allowsDelayedPaymentMethods: true,
+    defaultBillingDetails: {
+      name: 'Jane Doe',
+    },
+  });
+  if (!error) {
+    setLoading(true);
+  } else {
+    console.error('Error initializing payment sheet:', error);
+  }
+};
+
+
+const openPaymentSheet = async () => {
+  if (!loading) return;
+
+  try {
     const { error } = await presentPaymentSheet();
+
     if (error) {
-      Alert.alert(`Error: ${error.message}`);
-    } else {
-      Alert.alert('Success', 'Your payment is confirmed!');
+      Alert.alert('Payment Failed', error.message);
+      return;
     }
-  };
+
+    Alert.alert('Payment Success', 'Your payment is confirmed!');
+
+    const expenseData = {
+      expenseName,
+      amount: parseFloat(billAmount),
+      participants: participants.map((p) => p._id),
+      groupId: currentGroupId,
+      payer: userId,
+      paymentIntentId: paymentIntentId, // Send only the Payment Intent ID
+    };
+
+    console.log('Sending expense data to server:', expenseData);
+
+    const response = await fetch(
+      'https://money-splitter-backend.onrender.com/api/expenses/confirm-payment',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(expenseData),
+      }
+    );
+
+    console.log('Response status:', response.status);
+
+    const result = await response.json();
+
+    console.log('Server response:', result);
+
+    if (response.ok) {
+      Alert.alert('Expense Added', 'The expense has been added successfully.');
+    } else {
+      Alert.alert('Error Adding Expense', result.message || 'Failed to add expense.');
+    }
+  } catch (err) {
+    console.error('Error in openPaymentSheet:', err);
+
+    if (err instanceof SyntaxError) {
+      Alert.alert('Server Error', 'Invalid response from the server.');
+    } else {
+      Alert.alert('Error', err.message || 'An unexpected error occurred.');
+    }
+  }
+};
+
+
+
 
   const calculateSplit = () => {
     const amount = parseFloat(billAmount);

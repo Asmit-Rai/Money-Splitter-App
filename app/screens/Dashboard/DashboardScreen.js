@@ -15,6 +15,7 @@ import Modal from "react-native-modal";
 import axios from "axios";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+
 const DashboardScreen = () => {
   const navigation = useNavigation();
   const [groups, setGroups] = useState([]);
@@ -23,6 +24,7 @@ const DashboardScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState(null);
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
     const fetchEmail = async () => {
@@ -33,18 +35,33 @@ const DashboardScreen = () => {
         await AsyncStorage.setItem("email", user.email);
       }
     };
-  
+
     fetchEmail();
   }, []);
-  
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const email = await AsyncStorage.getItem("email"); // Use AsyncStorage to retrieve the email
+      const email = await AsyncStorage.getItem("email"); 
+
+      // Fetch user ID based on email
+      const userIdResponse = await axios.post(
+        `https://money-splitter-backend.onrender.com/api/users/get-user-id`,
+        { email }
+      );
+      const userId = userIdResponse.data.userId;
+      console.log("Fetched User ID:", userId); // Log the user ID
+      setUserId(userId);
+      await 
+      
+      
+      AsyncStorage.setItem("userId", userId); // Save userId to AsyncStorage
+
+      // Fetch groups based on email
       const response = await axios.get(
         `https://money-splitter-backend.onrender.com/api/groups/show-groups?email=${email}`
       );
+
       setGroups(response.data);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -53,7 +70,6 @@ const DashboardScreen = () => {
       setLoading(false);
     }
   };
-  
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -77,8 +93,7 @@ const DashboardScreen = () => {
         `https://money-splitter-backend.onrender.com/api/groups/${groupId}`
       );
       setGroups((prevGroups) =>
-      prevGroups.filter((group) => group._id.toString() !== groupId.toString())
-
+        prevGroups.filter((group) => group._id.toString() !== groupId.toString())
       );
       setModalVisible(false);
       Alert.alert("Success", "Group deleted successfully");
@@ -139,11 +154,11 @@ const DashboardScreen = () => {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.groupContainer}
-            onPress={() =>
+            onPress={() => {
               navigation.navigate("GroupDetail", {
                 groupDetails: item,
-              })
-            }
+              });
+            }}
             onLongPress={() => handleLongPress(item)}
           >
             <Avatar.Image
