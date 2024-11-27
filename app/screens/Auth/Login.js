@@ -18,7 +18,6 @@ const LoginScreen = () => {
             navigation.navigate('Money Splitter'); 
         } catch (error) {
             const errorMessage = error.message || "An error occurred during login.";
-            // Show a toast with the error message
             Toast.show({
                 type: 'error',
                 text1: 'Authentication Error',

@@ -8,11 +8,10 @@ import GroupDetailScreen from '../screens/GroupDetail/GroupDetail';
 import QRScreen from '../screens/QRScanner/QRScreen';
 import SplitExpenseScreen from '../screens/SplitExpense/SplitExpenseScreen';
 import SettingsScreen from '../screens/Settings/SettingsScreen';
-import InviteMembersScreen from '../screens/InviteMember/InviteMemberScreen'; // Fixed duplicate import
+import InviteMembersScreen from '../screens/InviteMember/InviteMemberScreen'; 
 import GroupExpenseSummaryScreen from '../screens/GroupExpenseSummary/GroupExpenseSummaryScreen';
-import CreateExpenseScreen from '../screens/CreateExpense/CreateExpenseScreen'; 
-import CreateGroup from '../screens/CreateGroup/CreateGroup'; // Fixed path
-import SignUp from '../screens/Auth/SignUp'; // Fixed path
+import CreateGroup from '../screens/CreateGroup/CreateGroup'; 
+import SignUp from '../screens/Auth/SignUp'; 
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -22,7 +21,7 @@ const TabNavigator = () => {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ color, size }) => {
-          let iconName = 'view-dashboard'; // Removed TypeScript type annotation
+          let iconName = 'view-dashboard'; 
           
           if (route.name === 'Dashboard') {
             iconName = 'view-dashboard';
@@ -56,11 +55,11 @@ const AppNavigator = () => {
       <Stack.Screen name="SignUp" component={SignUp} />
       <Stack.Screen name="Money Splitter" component={TabNavigator} />
       <Stack.Screen name="GroupDetail" component={GroupDetailScreen} />
-      <Stack.Screen name="CreateExpense" component={CreateExpenseScreen} />
+      <Stack.Screen name="GroupExpenseSummaryScreen" component={GroupExpenseSummaryScreen} />
       <Stack.Screen name="QRScanner" component={QRScreen} />
       <Stack.Screen name="SplitExpense" component={SplitExpenseScreen} />
       <Stack.Screen name="InviteMember" component={InviteMembersScreen} />
-      <Stack.Screen name="GroupExpenseSummaryScreen" component={GroupExpenseSummaryScreen} />
+   
     </Stack.Navigator>
   );
 };

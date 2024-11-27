@@ -1,128 +1,78 @@
-import React, { useEffect, useState } from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
-import { useRoute } from "@react-navigation/native";
-import { Card, Text, List } from "react-native-paper";
+import React from 'react';
+import { View, StyleSheet, ScrollView } from 'react-native';
+import { Text, List, Divider } from 'react-native-paper';
+import { useRoute } from '@react-navigation/native';
 
-const GroupExpenseSummaryScreen = () => {
+const ExpenseDetailsScreen = () => {
   const route = useRoute();
-  const { expenseSummary, groupName, participants } = route.params;
-  const [paymentStatus, setPaymentStatus] = useState([]);
-  const [splitDetails, setSplitDetails] = useState([]);
+  const { expense, groupName, participants } = route.params;
 
-  useEffect(() => {
-    const fetchPaymentStatus = async () => {
-      try {
-        const response = await fetch(
-          `https://money-splitter-backend.onrender.com/api/expenses/${expenseSummary.paymentIntentId}`
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log("Fetched payment status:", data);
-
-        setPaymentStatus(data.paymentStatus || []);
-        setSplitDetails(data.splitDetails || []);
-      } catch (error) {
-        console.error("Error fetching payment status:", error.message);
-      }
-    };
-
-    if (expenseSummary?.paymentIntentId) {
-      fetchPaymentStatus();
-    }
-  }, [expenseSummary.paymentIntentId]);
+  if (!expense) {
+    return <Text>Error: Expense details not found.</Text>;
+  }
 
   return (
-    <ScrollView style={styles.container}>
-      <Card style={styles.card}>
-        <Card.Title title="Group Expense Summary" />
-        <Card.Content>
-          <Text style={styles.label}>Group Name: {groupName}</Text>
-          <Text style={styles.label}>
-            Expense Name: {expenseSummary.expenseName}
-          </Text>
-          <Text style={styles.label}>Amount: ₹{expenseSummary.amount}</Text>
-          <Text style={styles.label}>
-            Paid By: {expenseSummary.payer?.name || "Unknown"}
-          </Text>
-          <Text style={styles.label}>
-            Date: {new Date(expenseSummary.createdAt).toLocaleDateString()}
-          </Text>
+    <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.title}>{expense.expenseName}</Text>
+      <Text style={styles.groupName}>Group: {groupName}</Text>
+      <Text style={styles.amount}>Total Amount: ₹{expense.amount}</Text>
+      <Text style={styles.paidBy}>Paid By: {expense.payerName}</Text>
+      <Text style={styles.date}>
+        Date: {new Date(expense.createdAt).toLocaleDateString()}
+      </Text>
+      <Divider style={styles.divider} />
 
-          <Text style={styles.subHeading}>Split Details:</Text>
-          {splitDetails.length > 0 ? (
-            splitDetails.map((split, idx) => (
-              <Text key={idx} style={styles.label}>
-                {split.participant}: Owes ₹{split.owedAmount}
-              </Text>
-            ))
-          ) : (
-            <Text style={styles.label}>No split details available.</Text>
-          )}
-
-          <Text style={styles.subHeading}>Participants:</Text>
-          {participants.map((participant) => {
-            const payment = paymentStatus.find(
-              (p) => p.participant === participant.name
-            );
-            const hasPaid = payment ? payment.status === "succeeded" : false;
-
-            return (
-              <List.Item
-                key={participant._id}
-                title={participant.name}
-                description={`${participant.email} - ${
-                  hasPaid ? "Has Paid" : "Has Not Paid"
-                }`}
-                left={() => <List.Icon icon="account" />}
-                style={styles.participant}
-              />
-            );
-          })}
-
-          <Text style={styles.subHeading}>Payment Status:</Text>
-          {paymentStatus.length > 0 ? (
-            paymentStatus.map((payment, idx) => (
-              <Text
-                key={payment.participant + payment.status + idx}
-                style={styles.label}
-              >
-                {payment.participant}: {payment.status} (₹{payment.amountPaid})
-              </Text>
-            ))
-          ) : (
-            <Text style={styles.label}>No payment status available.</Text>
-          )}
-        </Card.Content>
-      </Card>
+      <Text style={styles.participantsTitle}>Split Details:</Text>
+      {expense.splitDetails.map((split, index) => (
+        <List.Item
+          key={index}
+          title={`${participants.find((p) => p._id === split.participant)?.name || 'Unknown'}`}
+          description={`Owed Amount: ₹${split.owedAmount}`}
+          left={(props) => <List.Icon {...props} icon="account-circle" />}
+        />
+      ))}
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     padding: 16,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: '#fff',
   },
-  card: {
-    margin: 16,
-  },
-  label: {
-    fontSize: 16,
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
     marginBottom: 8,
   },
-  subHeading: {
+  groupName: {
     fontSize: 18,
-    fontWeight: "bold",
-    marginVertical: 8,
+    marginBottom: 4,
+    color: '#555',
   },
-  participant: {
-    marginLeft: 16,
+  amount: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  paidBy: {
+    fontSize: 16,
+    marginBottom: 4,
+    color: '#555',
+  },
+  date: {
+    fontSize: 16,
+    marginBottom: 12,
+    color: '#555',
+  },
+  divider: {
+    marginVertical: 16,
+  },
+  participantsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
   },
 });
 
-export default GroupExpenseSummaryScreen;
+export default ExpenseDetailsScreen;

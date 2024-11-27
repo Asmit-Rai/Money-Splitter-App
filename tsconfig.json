@@ -13,5 +13,5 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
-, "app/screens/GroupDetail/GroupDetail.js", "app/screens/Dashboard/DashboardScreen.js", "app/screens/Auth/Login.js", "app/index.js", "app/App.js", "app/screens/GroupExpenseSummary/GroupExpenseSummaryScreen.js", "app/screens/PaymentIntegration/PaymentIntegrationScreen.js"  ]
+, "app/screens/GroupDetail/GroupDetail.js", "app/screens/Dashboard/DashboardScreen.js", "app/screens/Auth/Login.js", "app/index.js", "app/App.js", "app/screens/GroupExpenseSummary/GroupExpenseSummaryScreen.js", "app/screens/PaymentIntegration/PaymentIntegrationScreen.js", "app/screens/QRScanner/QRScreen.js"  ]
 }
