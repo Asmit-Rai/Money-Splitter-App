@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Alert, ScrollView } from 'react-native';
-import { Text, Button, TextInput, List, Checkbox } from 'react-native-paper';
-import { useRoute, useNavigation } from '@react-navigation/native';
-import { StripeProvider, useStripe } from '@stripe/stripe-react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useState, useEffect } from "react";
+import { View, StyleSheet, Alert, ScrollView } from "react-native";
+import { Text, Button, TextInput, List, Checkbox } from "react-native-paper";
+import { useRoute, useNavigation } from "@react-navigation/native";
+import { StripeProvider, useStripe } from "@stripe/stripe-react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const QRScreen = () => {
   const route = useRoute();
@@ -11,19 +11,23 @@ const QRScreen = () => {
   const navigation = useNavigation();
 
   const [userId, setUserId] = useState(null);
-  const [billAmount, setBillAmount] = useState('');
-  const [expenseName, setExpenseName] = useState('');
-  const [splitAmount, setSplitAmount] = useState('');
+  const [billAmount, setBillAmount] = useState("");
+  const [expenseName, setExpenseName] = useState("");
+  const [splitAmount, setSplitAmount] = useState("");
   const [checked, setChecked] = useState(true);
   const [amounts, setAmounts] = useState({});
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const [loading, setLoading] = useState(false);
-  const [paymentIntentId, setPaymentIntentId] = useState('');
-  const [paymentIntentClientSecret, setPaymentIntentClientSecret] = useState('');
+  const [paymentIntentId, setPaymentIntentId] = useState("");
+  const [paymentIntentClientSecret, setPaymentIntentClientSecret] =
+    useState("");
 
   useEffect(() => {
     const fetchUserId = async () => {
-      const storedUserId = await AsyncStorage.getItem('userId');
+      const storedUserId = await AsyncStorage.getItem("userId");
+      if (!storedUserId) {
+        console.error("User ID not found in AsyncStorage");
+      }
       setUserId(storedUserId);
     };
 
@@ -37,25 +41,28 @@ const QRScreen = () => {
   }, [billAmount]);
 
   const fetchPaymentSheetParams = async () => {
-    const response = await fetch('https://money-splitter-backend.onrender.com/payment-sheet', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        expenseName,
-        billAmount: parseFloat(billAmount),
-        splitDetails: checked
-          ? participants.map((p) => ({
-              name: p.name,
-              amount: splitAmount,
-            }))
-          : Object.entries(amounts).map(([name, amount]) => ({
-              name,
-              amount: parseFloat(amount),
-            })),
-      }),
-    });
+    const response = await fetch(
+      "https://money-splitter-backend.onrender.com/payment-sheet",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          expenseName,
+          billAmount: parseFloat(billAmount),
+          splitDetails: checked
+            ? participants.map((p) => ({
+                name: p.name,
+                amount: splitAmount,
+              }))
+            : Object.entries(amounts).map(([name, amount]) => ({
+                name,
+                amount: parseFloat(amount),
+              })),
+        }),
+      }
+    );
 
     const {
       paymentIntentId,
@@ -64,7 +71,7 @@ const QRScreen = () => {
       customer,
     } = await response.json();
 
-    console.log('Payment sheet params:', {
+    console.log("Payment sheet params:", {
       paymentIntentId,
       paymentIntentClientSecret,
       ephemeralKey,
@@ -82,25 +89,22 @@ const QRScreen = () => {
   };
 
   const initializePaymentSheet = async () => {
-    const {
-      paymentIntentClientSecret,
-      ephemeralKey,
-      customer,
-    } = await fetchPaymentSheetParams();
+    const { paymentIntentClientSecret, ephemeralKey, customer } =
+      await fetchPaymentSheetParams();
     const { error } = await initPaymentSheet({
-      merchantDisplayName: 'Example, Inc.',
+      merchantDisplayName: "Example, Inc.",
       customerId: customer,
       customerEphemeralKeySecret: ephemeralKey,
       paymentIntentClientSecret: paymentIntentClientSecret,
       allowsDelayedPaymentMethods: true,
       defaultBillingDetails: {
-        name: 'Jane Doe',
+        name: "Jane Doe",
       },
     });
     if (!error) {
       setLoading(true);
     } else {
-      console.error('Error initializing payment sheet:', error);
+      console.error("Error initializing payment sheet:", error);
     }
   };
 
@@ -111,25 +115,21 @@ const QRScreen = () => {
       const { error } = await presentPaymentSheet();
 
       if (error) {
-        Alert.alert('Payment Failed', error.message);
+        Alert.alert("Payment Failed", error.message);
         return;
       }
 
-      Alert.alert('Payment Success', 'Your payment is confirmed!');
+      Alert.alert("Payment Success", "Your payment is confirmed!");
 
-      let splitDetails = [];
-
-      if (checked) {
-        splitDetails = participants.map((participant) => ({
-          participant: participant._id,
-          owedAmount: parseFloat(splitAmount),
-        }));
-      } else {
-        splitDetails = participants.map((participant) => ({
-          participant: participant._id,
-          owedAmount: parseFloat(amounts[participant.name] || '0'),
-        }));
-      }
+      let splitDetails = checked
+        ? participants.map((participant) => ({
+            participant: participant._id,
+            owedAmount: parseFloat(splitAmount),
+          }))
+        : participants.map((participant) => ({
+            participant: participant._id,
+            owedAmount: parseFloat(amounts[participant.name] || "0"),
+          }));
 
       const expenseData = {
         expenseName,
@@ -141,43 +141,39 @@ const QRScreen = () => {
         splitDetails,
       };
 
-      console.log('Sending expense data to server:', expenseData);
+      console.log("Submitting expense to server:", expenseData);
 
       const response = await fetch(
-        'https://money-splitter-backend.onrender.com/api/expenses/confirm-payment',
+        "https://money-splitter-backend.onrender.com/api/expenses/confirmPaymentAndAddExpense",
         {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(expenseData),
         }
       );
 
-      console.log('Response status:', response.status);
+      const responseText = await response.text();
+      console.log("Server response:", responseText);
 
-      const result = await response.json();
-
-      console.log('Server response:', result);
-
-      if (response.ok) {
-        Alert.alert('Expense Added', 'The expense has been added successfully.');
-
-        navigation.navigate('GroupExpenseSummaryScreen', {
-          expenseSummary: result.expense,
-          groupName: 'Group Name',
-          participants,
-        });
-      } else {
-        Alert.alert('Error Adding Expense', result.message || 'Failed to add expense.');
+      if (!response.ok) {
+        Alert.alert(
+          "Error Adding Expense",
+          responseText || "Failed to add expense."
+        );
+        return;
       }
+
+      const result = JSON.parse(responseText);
+      console.log("Expense added successfully:", result.expense);
     } catch (err) {
-      console.error('Error in openPaymentSheet:', err);
+      console.error("Error in openPaymentSheet:", err);
 
       if (err instanceof SyntaxError) {
-        Alert.alert('Server Error', 'Invalid response from the server.');
+        Alert.alert("Server Error", "Invalid response from the server.");
       } else {
-        Alert.alert('Error', err.message || 'An unexpected error occurred.');
+        Alert.alert("Error", err.message || "An unexpected error occurred.");
       }
     }
   };
@@ -185,12 +181,15 @@ const QRScreen = () => {
   const calculateSplit = () => {
     const amount = parseFloat(billAmount);
     if (isNaN(amount) || amount <= 0) {
-      Alert.alert('Invalid Bill Amount', 'Please enter a valid bill amount.');
+      Alert.alert("Invalid Bill Amount", "Please enter a valid bill amount.");
       return;
     }
 
     if (participants.length === 0) {
-      Alert.alert('No Participants', 'There are no participants to split the bill.');
+      Alert.alert(
+        "No Participants",
+        "There are no participants to split the bill."
+      );
       return;
     }
 
@@ -205,25 +204,28 @@ const QRScreen = () => {
       setAmounts(equalAmounts);
     } else {
       const totalEntered = Object.values(amounts).reduce(
-        (sum, val) => sum + parseFloat(val || '0'),
+        (sum, val) => sum + parseFloat(val || "0"),
         0
       );
 
       if (isNaN(totalEntered) || totalEntered <= 0) {
-        Alert.alert('Invalid Amounts', 'Please enter valid amounts for participants.');
+        Alert.alert(
+          "Invalid Amounts",
+          "Please enter valid amounts for participants."
+        );
         return;
       }
 
       if (totalEntered !== amount) {
         Alert.alert(
-          'Amounts Mismatch',
+          "Amounts Mismatch",
           `The total of individual amounts (${totalEntered.toFixed(
             2
           )}) does not equal the bill amount (${amount.toFixed(2)}).`
         );
         return;
       }
-      setSplitAmount('');
+      setSplitAmount("");
     }
   };
 
@@ -232,7 +234,7 @@ const QRScreen = () => {
   };
 
   return (
-    <StripeProvider publishableKey='pk_test_51QIsU3EbklFJ2mKnHm8ptUIow6AueGIYorOvFKJRAzzfZk7AHYCqAqGMZ2tx1vlUe8nDCltXQUIQPIA8mcLBLdt100oydNPXKQ'>
+    <StripeProvider publishableKey="pk_test_51QIsU3EbklFJ2mKnHm8ptUIow6AueGIYorOvFKJRAzzfZk7AHYCqAqGMZ2tx1vlUe8nDCltXQUIQPIA8mcLBLdt100oydNPXKQ">
       <ScrollView contentContainerStyle={styles.container}>
         <TextInput
           mode="outlined"
@@ -250,9 +252,9 @@ const QRScreen = () => {
           style={styles.input}
         />
 
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Checkbox
-            status={checked ? 'checked' : 'unchecked'}
+            status={checked ? "checked" : "unchecked"}
             onPress={() => setChecked(!checked)}
           />
           <Text style={{ fontSize: 16, marginLeft: 8, marginTop: 8 }}>
@@ -273,8 +275,10 @@ const QRScreen = () => {
                   mode="outlined"
                   label="Amount"
                   keyboardType="numeric"
-                  value={amounts[participant.name] || ''}
-                  onChangeText={(value) => handleAmountChange(participant.name, value)}
+                  value={amounts[participant.name] || ""}
+                  onChangeText={(value) =>
+                    handleAmountChange(participant.name, value)
+                  }
                   style={styles.amountInput}
                 />
               </View>
@@ -289,7 +293,7 @@ const QRScreen = () => {
         ) : null}
 
         <Button mode="contained" onPress={calculateSplit} style={styles.button}>
-          {checked ? 'Calculate Equal Split' : 'Validate Amounts'}
+          {checked ? "Calculate Equal Split" : "Validate Amounts"}
         </Button>
 
         <Button
@@ -317,11 +321,11 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   checkoutButton: {
-    backgroundColor: '#008000', 
+    backgroundColor: "#008000",
   },
   participantRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 10,
   },
   amountInput: {
