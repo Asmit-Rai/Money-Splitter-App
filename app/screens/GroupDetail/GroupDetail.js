@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
   View,
-  Image,
   StyleSheet,
   ScrollView,
   RefreshControl,
@@ -11,6 +10,7 @@ import {
 import { Text, Card, Avatar, List, Divider, Button } from "react-native-paper";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import Modal from "react-native-modal";
+
 
 const GroupDetailScreen = () => {
   const navigation = useNavigation();
@@ -124,12 +124,11 @@ const GroupDetailScreen = () => {
     >
       <Card style={styles.groupCard}>
         <View style={styles.groupHeader}>
-          <Image
-            source={{
-              uri: groupDetails.groupImage || "https://via.placeholder.com/150",
-            }}
-            style={styles.groupImage}
-          />
+          <Avatar.Image
+                size={80}
+                source={require("@/assets/images/groupImage.png")}
+                style={styles.groupAvatar}
+              />
           <View style={styles.groupHeaderText}>
             <Text style={styles.groupName}>{groupDetails.groupName}</Text>
           </View>
@@ -257,7 +256,7 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   amount: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: "bold",
   },
   noExpensesText: {
