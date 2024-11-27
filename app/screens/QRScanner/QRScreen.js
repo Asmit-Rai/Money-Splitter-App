@@ -19,8 +19,7 @@ const QRScreen = () => {
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const [loading, setLoading] = useState(false);
   const [paymentIntentId, setPaymentIntentId] = useState("");
-  const [paymentIntentClientSecret, setPaymentIntentClientSecret] =
-    useState("");
+  const [paymentIntentClientSecret, setPaymentIntentClientSecret] = useState("");
 
   useEffect(() => {
     const fetchUserId = async () => {

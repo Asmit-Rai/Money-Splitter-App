@@ -6,9 +6,6 @@ import LoginScreen from '../screens/Auth/Login';
 import DashboardScreen from '../screens/Dashboard/DashboardScreen';
 import GroupDetailScreen from '../screens/GroupDetail/GroupDetail';
 import QRScreen from '../screens/QRScanner/QRScreen';
-import SplitExpenseScreen from '../screens/SplitExpense/SplitExpenseScreen';
-import SettingsScreen from '../screens/Settings/SettingsScreen';
-import InviteMembersScreen from '../screens/InviteMember/InviteMemberScreen'; 
 import GroupExpenseSummaryScreen from '../screens/GroupExpenseSummary/GroupExpenseSummaryScreen';
 import CreateGroup from '../screens/CreateGroup/CreateGroup'; 
 import SignUp from '../screens/Auth/SignUp'; 
@@ -42,8 +39,6 @@ const TabNavigator = () => {
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
       <Tab.Screen name="Create Group" component={CreateGroup} />
-      <Tab.Screen name="Invite Members" component={InviteMembersScreen} />
-      <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );
 };
@@ -57,9 +52,6 @@ const AppNavigator = () => {
       <Stack.Screen name="GroupDetail" component={GroupDetailScreen} />
       <Stack.Screen name="GroupExpenseSummaryScreen" component={GroupExpenseSummaryScreen} />
       <Stack.Screen name="QRScanner" component={QRScreen} />
-      <Stack.Screen name="SplitExpense" component={SplitExpenseScreen} />
-      <Stack.Screen name="InviteMember" component={InviteMembersScreen} />
-   
     </Stack.Navigator>
   );
 };
